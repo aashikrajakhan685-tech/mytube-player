@@ -225,7 +225,17 @@
 
       setStatus("Player opened. Tap Play inside the video.");
     }
+function loadVideoFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const videoId = params.get("v");
 
+  if (videoId && /^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+    videoInput.value = videoId;
+    loadVideo();
+  }
+}
+
+window.addEventListener("load", loadVideoFromUrl);
     async function openFullscreen() {
       try {
         if (document.fullscreenElement) {
