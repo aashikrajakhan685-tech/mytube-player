@@ -7,13 +7,10 @@
         content="width=device-width, initial-scale=1.0">
   <meta name="referrer"
         content="strict-origin-when-cross-origin">
-
   <title>MyTube Premium Player</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -60,17 +57,9 @@
       aspect-ratio: auto;
       border: none;
       border-radius: 0;
-      box-shadow: none;
-      background: black;
     }
 
-    .player:fullscreen iframe {
-      width: 100%;
-      height: 100%;
-    }
-
-    input,
-    button {
+    input, button {
       width: 100%;
       padding: 15px;
       margin-top: 16px;
@@ -82,47 +71,21 @@
       background: #171728;
       color: white;
       border: 1px solid #666;
-      outline: none;
-    }
-
-    input:focus {
-      border-color: #00e5ff;
     }
 
     button {
       border: none;
       background: linear-gradient(
-        90deg,
-        #00e5ff,
-        #b44cff
+        90deg, #00e5ff, #b44cff
       );
       color: #090912;
       font-weight: bold;
-      cursor: pointer;
     }
 
     .fullscreen-btn {
       background: #24243a;
       color: white;
       border: 1px solid #bd4cff;
-    }
-
-    .exit-btn {
-      display: none;
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 10;
-      width: auto;
-      margin: 0;
-      padding: 10px 14px;
-      background: #171728dd;
-      color: white;
-      border: 1px solid #00e5ff;
-    }
-
-    .player:fullscreen .exit-btn {
-      display: block;
     }
 
     #status {
@@ -136,7 +99,6 @@
       color: #85859b;
       text-align: center;
       font-size: 12px;
-      margin-top: 12px;
     }
   </style>
 </head>
@@ -149,17 +111,10 @@
       <iframe
         id="videoPlayer"
         title="YouTube video player"
-        src="https://www.youtube.com/embed/jNQXAC9IVRw?playsinline=1"
         allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         referrerpolicy="strict-origin-when-cross-origin"
         allowfullscreen>
       </iframe>
-
-      <button
-        class="exit-btn"
-        onclick="exitFullscreen()">
-        Exit Fullscreen
-      </button>
     </div>
 
     <input
@@ -167,16 +122,15 @@
       type="text"
       maxlength="11"
       placeholder="Enter YouTube video ID"
-      aria-label="YouTube video ID"
-    >
+      aria-label="YouTube video ID">
 
-    <button onclick="loadVideo()">
+    <button id="playButton">
       Play Video
     </button>
 
     <button
       class="fullscreen-btn"
-      onclick="openFullscreen()">
+      id="fullscreenButton">
       Fullscreen Video
     </button>
 
@@ -204,81 +158,70 @@
     const statusElement =
       document.getElementById("status");
 
+    const validId = /^[a-zA-Z0-9_-]{11}$/;
+
     function setStatus(message) {
       statusElement.textContent = message;
     }
 
-    function loadVideo() {
-      const videoId = videoInput.value.trim();
+    function loadVideo(videoId) {
+      const id = videoId.trim();
 
-      if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+      if (!validId.test(id)) {
         setStatus("Enter a valid 11-character video ID.");
         return;
       }
 
-      const videoUrl =
+      videoInput.value = id;
+
+      const embedUrl =
         "https://www.youtube.com/embed/" +
-        encodeURIComponent(videoId) +
+        encodeURIComponent(id) +
         "?playsinline=1";
 
-      videoPlayer.src = videoUrl;
+      videoPlayer.src = embedUrl;
 
-      setStatus("Player opened. Tap Play inside the video.");
+      setStatus("Tap Play inside the video.");
     }
-function loadVideoFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const videoId = params.get("v");
 
-  if (videoId && /^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
-    videoInput.value = videoId;
-    loadVideo();
-  }
-}
+    function loadVideoFromUrl() {
+      const params =
+        new URLSearchParams(window.location.search);
 
-window.addEventListener("load", loadVideoFromUrl);
-    async function openFullscreen() {
-      try {
-        if (document.fullscreenElement) {
-          return;
-        }
+      const id = params.get("v");
 
-        if (!playerContainer.requestFullscreen) {
-          setStatus(
-            "Fullscreen is not supported in this browser."
-          );
-          return;
-        }
-
-        await playerContainer.requestFullscreen();
-
-        setStatus("Fullscreen enabled.");
-      } catch (error) {
-        console.error("Fullscreen error:", error);
-        setStatus(
-          "Fullscreen failed. Try opening in Chrome."
-        );
+      if (id) {
+        loadVideo(id);
+      } else {
+        setStatus("Select a video to start playback.");
       }
     }
 
-    async function exitFullscreen() {
-      try {
-        if (document.fullscreenElement) {
-          await document.exitFullscreen();
-        }
-      } catch (error) {
-        console.error("Exit fullscreen error:", error);
-        setStatus("Unable to exit fullscreen.");
-      }
-    }
+    document.getElementById("playButton")
+      .addEventListener("click", function () {
+        loadVideo(videoInput.value);
+      });
 
-    document.addEventListener(
-      "fullscreenchange",
-      function () {
-        if (!document.fullscreenElement) {
-          setStatus("Fullscreen closed.");
+    document.getElementById("fullscreenButton")
+      .addEventListener("click", async function () {
+        try {
+          if (document.fullscreenElement) {
+            return;
+          }
+
+          if (!playerContainer.requestFullscreen) {
+            setStatus("Fullscreen not supported.");
+            return;
+          }
+
+          await playerContainer.requestFullscreen();
+        } catch (error) {
+          console.error(error);
+          setStatus("Fullscreen failed.");
         }
-      }
-    );
+      });
+
+    loadVideoFromUrl();
   </script>
 </body>
 </html>
